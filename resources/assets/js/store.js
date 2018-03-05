@@ -2,7 +2,6 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import axios from 'axios';
 
-const api = '/api';
 const highlight = require('highlight.js');
 const marked = require('marked');
 
@@ -39,23 +38,17 @@ export default new Vuex.Store({
 		SHOW_MENU (state) {
 			state.showMenu = !state.showMenu
 		},
-		NEW_ARTICLE (state) {
-			for (let i = 0, len = state.articleList.length; i < len; i++) {
-				state.articleList[i].current = false
-			}
-			
-			let newOne = {
-				id: createID(),
-				title: 'Untitled',
-				content: 'Untitled\n---',
-				current: true
-			}
-
-			state.articleList.push(newOne)
-		},
-		// NEW
 		FETCH (state, notes) {
-			state.notes = notes;
+			axios({
+				method: 'get',
+				url: '/api'
+			}).then(function (response) {
+				response.data.map((obj) => {obj.current = false; return obj;})
+				response.data[0].current = true;
+				state.notes = response.data;
+			}).catch(function (error) {
+				console.log(error);
+			}); 
 		},
 		SHOW (state, index) {
 			for (let i = 0, len = state.notes.length; i < len; i++) {
@@ -70,10 +63,58 @@ export default new Vuex.Store({
 				}
 			}
 		},
+		POST_NOTE (state) {
+			for (let i = 0, len = state.notes.length; i < len; i++) {
+				if (state.notes[i].current) {
+					axios({
+						method: 'post',
+						url: '/api',
+						data: {
+							title: 'Untitled',
+							content: 'Something'
+						}
+					}).then(function (response) {
+						for (let i = 0, len = state.notes.length; i < len; i++) {
+							state.notes[i].current = false
+						}
+						response.data.current = true
+						state.notes.push(response.data)
+					}).catch(function (error) {
+						console.log(error.message)
+					});
+				}
+			}
+		},
+		PUT_NOTE (state) {
+			for (let i = 0, len = state.notes.length; i < len; i++) {
+				if (state.notes[i].current) {
+					axios({
+						method: 'put',
+						url: '/api/' + state.notes[i].id,
+						data: {
+							title: state.notes[i].title,
+							content: state.notes[i].content
+						}
+					}).then(function (response) {
+					}).catch(function (error) {
+						console.log(error.message);
+					});
+				}
+			}
+		},
 		DELETE_NOTE (state) {
 			for (let i = 0, len = state.notes.length; i < len; i++) {
 				if (state.notes[i].current) {
-					console.log(state.notes[i].id);
+					axios({
+						method: 'delete',
+						url: '/api/' + state.notes[i].id,
+					}).then(function (response) {
+						state.notes[i].current = false
+						state.notes.splice(i, 1)
+						state.notes[i-1].current = true
+					}).catch(function (error) {
+						console.log(error.message);
+					});
 				}
 			}
 		}
@@ -82,26 +123,20 @@ export default new Vuex.Store({
 		showMenu ({ commit }) {
 			commit('SHOW_MENU')
 		},
-		newArticle ({ commit }) {
-			commit('NEW_ARTICLE')
-			//commit('SAVE_TO_CACHE')
-		},
-		// NEW
 		fetch ({ commit }) {
-			axios.get('/api')
-				.then(function (response) {
-					response.data.map((obj) => {obj.current = false; return obj;})
-					response.data[0].current = true;
-					commit('FETCH', response.data)
-				}).catch(function (error) {
-					console.log(error);
-				}); 
+			commit('FETCH')
+		},
+		save ({ commit }) {
+			commit('PUT_NOTE')
 		},
 		show ({ commit }, index) {
 			commit('SHOW', index)
 		},
 		input ({ commit }, txt) {
 			commit('INPUT', txt)
+		},
+		newNote ({ commit }) {
+			commit('POST_NOTE')
 		},
 		deleteNote ({ commit }) {
 			commit('DELETE_NOTE')

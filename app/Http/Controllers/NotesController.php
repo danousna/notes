@@ -32,12 +32,12 @@ class NotesController extends Controller
             'content'   => 'required'
         ));
 
-        $note = new Note;
-        $note->title = $request->title;
-        $note->content = $request->content;
-        $note->save();
+        $note = Note::create([
+            'title'     => $request->title,
+            'content'   => $request->content
+        ]);
 
-        return response()->json($note, 201);
+        return response()->json($note);
     }
 
     /**
@@ -66,6 +66,7 @@ class NotesController extends Controller
     public function destroy($id)
     {
         $note = Note::findOrFail($id);
+        $note->delete();
         
         return response()->json(null, 204);
     }

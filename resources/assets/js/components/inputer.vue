@@ -14,7 +14,7 @@
 		methods: {
 			inputting (e) {
 				this.$store.dispatch('input', e.target.value)
-				//this.$store.dispatch('saveToCache')
+				this.$store.dispatch('save')
 			},
 			syncStroll (e) {
 				let outputer = document.querySelector('.outputer')
@@ -29,7 +29,7 @@
 				fileReader.onloadend = function (e) {
 					let value = e.target.result
 					self.$store.dispatch('input', value)
-					//self.$store.dispatch('saveToCache')
+					self.$store.dispatch('save')
 				}
 			}
 		}
